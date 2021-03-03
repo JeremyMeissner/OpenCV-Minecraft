@@ -9,10 +9,14 @@ This project comes from a class in my computer science school. I had the constra
 ![GitHub last commit](https://img.shields.io/github/last-commit/JeremyMeissner/OpenCV-Minecraft)
 
 ![OpenCV Minecraft detect a tree](oaktree.gif)
+
+## Project structure
+
+![OpenCV Minecraft detect a tree](organization.png)
+
 ### Demos
 
 Currently you can only test the program via Google Colab:  
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/JeremyMeissner/OpenCV-Minecraft/blob/dev/opencvtest.ipynb)
 
 A complete tutorial for local testing is in progress...
-
