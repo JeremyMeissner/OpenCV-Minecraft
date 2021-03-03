@@ -3,5 +3,5 @@ classifiers/*
 negatives/*
 positives/*
 process/*
-treesTransparent/
+treesTransparent/*
 trees/*.mp4
