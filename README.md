@@ -31,9 +31,6 @@ You now need to install the `libopencv-dev` library using `apt-get install libop
 opencv_createsamples -img trees/1.jpg -bg negativeImage/negatives.txt -info sampleImageTest/cropped1.txt -num 128 -maxxangle 0.0 -maxyangle 0.0 -maxzangle 0.3 -bgcolor 255 -bgthresh 8 -w 48 -h 48
 ```
 
-> I've edit the `negativeImage/negatives.txt` and remove the relative folder on each line
-
-
 Next, you need to collect all the description files and combine into one file
 ```bash
 cat sampleImageTest/cropped*.txt > sampleImageTest/positives.txt
@@ -51,3 +48,6 @@ opencv_traincascade -data ../classifier -vec ../cropped.vec -bg negatives.txt -n
 ```
 * -numPos 200 is the number of positives images you have (with a margin because opencv can take more positive images that you have some times)
 * -numNeg 600 is the number of negatives images
+
+## Final result
+![OpenCV Minecraft detect a tree](https://i.imgur.com/UY1fzZO.png)
