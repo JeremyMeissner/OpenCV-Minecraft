@@ -1,0 +1,8 @@
+minecraft_cut.mp4
+classifiers/*
+negatives/*
+positives/*
+process/*
+treesTransparent/*
+trees/*.mp4
+commands.txt
