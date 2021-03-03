@@ -8,8 +8,7 @@ This project comes from a class in my computer science school. I had the constra
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/JeremyMeissner/OpenCV-Minecraft)
 
-![OpenCV Minecraft detect a tree](https://i.imgur.com/UY1fzZO.png)
-
+![OpenCV Minecraft detect a tree](oaktree.gif)
 ### Demos
 
 Currently you can only test the program via Google Colab:  
