@@ -6,16 +6,8 @@ import matplotlib.pyplot as plt
 from time import sleep
 from subprocess import check_call
 from glob import glob
+
 """
-final_file = []
-username = sys.argv[1]
-wordlist = sys.argv[2]
-select_os = sys.argv[3]
-number_of_worker = int(sys.argv[4])
-worker_id = int(sys.argv[5])
-filename = wordlist + '.txt'
-
-
 class color:
    PURPLE = '\033[95m'
    CYAN = '\033[96m'
@@ -30,45 +22,72 @@ class color:
    CWHITE  = '\33[37m'
 """
 
+NUMBER_STAGES = 10
+number_positives_images = number_negatives_images = 0
+
+# https://gist.github.com/keithweaver/562d3caa8650eefe7f84fa074e9ca949
+def createFolder(directory):
+    try:
+        if not os.path.exists(directory):
+            os.makedirs(directory)
+    except OSError:
+        print ('Error: Creating directory. ' +  directory)
+
+# https://stackoverflow.com/q/845058/11091778
+def file_len(fname):
+    with open(fname) as f:
+        for i, l in enumerate(f):
+            pass
+    return i + 1
+
+
 def convert_mp4_to_jpg():
-    # Convert the mp4 input into multiple images (3 images every seconds)
-    ffmpeg.input('input.mp4').filter('fps', fps='3').output('./negativeImage/out%d.jpg', start_number=0, **{'qscale:v': 2}).overwrite_output().run() #quiet=True
+    # Convert the mp4 input into multiple images (3 images for every seconds of the video)
+    ffmpeg.input('trees/input.mp4').filter('fps', fps='3').output('negatives/out%d.jpg', start_number=0, **{'qscale:v': 2}).overwrite_output().run() #quiet=True
 
 
 def list_every_negatives_images():
     # Alternative of ls (negativeImage is the folder where there are all the images proccess above)
-    negative_images = os.listdir('negativeImage')
+    negative_images = glob('negatives/*.jpg')
 
     # Reference all the images into a text file
-    with open("negativeImage/negatives.txt", "w+") as txt_file:
-        for line in negative_images:
-            txt_file.write("{}\n".format(line))
+    try:
+        with open("negatives/negatives.txt", "w+") as txt_file:
+            for line in negative_images:
+                txt_file.write("{}\n".format(os.path.basename(line)))
+    except:
+        print("Error: Cannot create text file that reference negatives images.")
 
 def create_positives_images():
     # Alternative of ls (trees is the folder where there are all the trees image)
-    original_images = os.listdir('trees')
+    original_images = glob("trees/*.jpg")
+
+    print(original_images)
     x = 0
 
     # Create the positives images for each trees images
-    for image_name in original_images:
-        check_call(["opencv_createsamples",
-                    "-img", "trees/{}".format(image_name),
-                    "-bg", "negativeImage/negatives.txt",
-                    "-info", "sampleImageTest/cropped{}.txt".format(x),
-                    "-num", "128",
-                    "-maxxangle", "0.0",
-                    "-maxyangle", "0.0",
-                    "-maxzangle", "0.3",
-                    "-bgcolor", "255",
-                    "-bgthresh", "8",
-                    "-w", "48",
-                    "-h", "48"])
-        x += 1
+    try:
+        for image_name in original_images:
+            check_call(["opencv_createsamples",
+                        "-img", "trees/{}".format(os.path.basename(image_name)),
+                        "-bg", "negatives/negatives.txt",
+                        "-info", "positives/cropped{}.txt".format(x),
+                        "-num", "128",
+                        "-maxxangle", "0.0",
+                        "-maxyangle", "0.0",
+                        "-maxzangle", "0.3",
+                        "-bgcolor", "255",
+                        "-bgthresh", "8",
+                        "-w", "48",
+                        "-h", "48"])
+            x += 1
+    except:
+        print("Error: Cannot create positives images.")
 
 def combine_all_positives_text_files():
     lines = []
     # Alternative of ls (get all the txt file in the folder)
-    positives_text_files = glob("sampleImageTest/*.txt")
+    positives_text_files = glob("positives/*.txt")
 
     # For each file selected above, put each line in an array (lines)
     for files in positives_text_files:
@@ -77,41 +96,62 @@ def combine_all_positives_text_files():
             lines.append(line)
 
     # Put every line of the array (lines) into an unique file
-    with open("sampleImageTest/positives.txt", "w+") as txt_file:
+    with open("positives/positives.txt", "w+") as txt_file:
         for line in lines:
             txt_file.write("{}".format(line))
 
+def count_images():
+    global number_positives_images, number_negatives_images
+    # Count the number of positives and negatives images
+    number_positives_images = file_len("positives/positives.txt")
+    number_negatives_images = file_len("negatives/negatives.txt")
+
 def convert_to_vec_file():
-    # Convert to a vec file
-    check_call(["opencv_createsamples",
-                    "-info", "sampleImageTest/positives.txt",
-                    "-bg", "negativeImageDirectory/negatives.txt",
-                    "-vec", "cropped.vec",
-                    "-num", "250",
-                    "-w", "48",
-                    "-h", "48"])
-    # -num 250 is the number of positives images
+    try:
+        # Convert to a vec file
+        check_call(["opencv_createsamples",
+                        "-info", "positives/positives.txt",
+                        "-bg", "positives/negatives.txt",
+                        "-vec", "positives/cropped.vec",
+                        "-num", str(number_positives_images),
+                        "-w", "48",
+                        "-h", "48"])
+        # -num 250 is the number of positives images
+    except:
+        print("Error: Cannot convert to vec file.")
 
 def train_the_cascade():
     # Alternative of cd (needed because the negatives.txt file only have the file name)
-    os.chdir('negativeImage')
+    os.chdir('negatives')
     # Train the Haar cascade 
-    check_call(["opencv_traincascade",
-                    "-data", "../classifier",
-                    "-vec", "../cropped.vec",
-                    "-bg", "negatives.txt",
-                    "-numPos", "200",
-                    "-numNeg", "600",
-                    "-numStages", "10",
-                    "-precalcValBufSize", "1024",
-                    "-precalcIdxBufSize", "1024",
-                    "-featureType", "HAAR",
-                    "-minHitRate", "0.995",
-                    "-maxFalseAlarmRate", "0.5",
-                    "-w", "48",
-                    "-h", "48"])
+    try:
+        check_call(["opencv_traincascade",
+                        "-data", "../classifiers",
+                        "-vec", "../positives/cropped.vec",
+                        "-bg", "negatives.txt",
+                        "-numPos", str(number_positives_images - (10*number_positives_images/100)), # Remove 10% because opencv_traincascade can take a bit more images
+                        "-numNeg", str(number_negatives_images - (10*number_negatives_images/100)),
+                        "-numStages", str(NUMBER_STAGES),
+                        "-precalcValBufSize", "1024",
+                        "-precalcIdxBufSize", "1024",
+                        "-featureType", "HAAR",
+                        "-minHitRate", "0.995",
+                        "-maxFalseAlarmRate", "0.5",
+                        "-w", "48",
+                        "-h", "48"])
+    except:
+        print("Error: Error while training the cascade.")
     os.chdir('..')
 
-
+createFolder('positives')
+createFolder('negatives')
+createFolder('classifiers')
+convert_mp4_to_jpg()
+list_every_negatives_images()
+create_positives_images()
+combine_all_positives_text_files()
+count_images()
+convert_to_vec_file()
 train_the_cascade()
+
 
