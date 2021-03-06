@@ -10,7 +10,7 @@ Now you need to install `cv2` with `pip3 install opencv-python` and `matplotlib`
 
 ## Convert to multiple images
 
-After that, you need to convert the mp4 video into multiple image with `ffmpeg` (you can install it using `apt-get install ffmpeg`)
+After that, you need to convert the mp4 video into multiple image with `ffmpeg` (you can install it using `pip3 install ffmpeg-python`)
 
 ```bash
 ffmpeg -i input.mp4 -qscale:v 2 -vf fps=3 ./negativeImage/out%d.jpg

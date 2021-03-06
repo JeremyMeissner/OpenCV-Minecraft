@@ -1,8 +1,8 @@
-minecraft_cut.mp4
-classifiers/*
-negatives/*
-positives/*
-process/*
-treesTransparent/*
-trees/*.mp4
-commands.txt
+training/classifiers/*
+training/negatives/*
+training/positives/*
+training/trees/*.mp4
+other/*
+
+__pycache__/
+.pytest_cache/
