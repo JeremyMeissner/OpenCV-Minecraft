@@ -52,7 +52,7 @@ def deleteFolder(directory):
     except OSError:
         print ('Error: Cannot delete directory. ' +  directory)
 
-def convert_mp4_to_jpg(file_input="trees/input.mp4", directory_output="", fps="3", isQuiet=False):
+def convert_mp4_to_jpg(file_input="trees/input.mp4", directory_output="negatives", fps="3", isQuiet=False):
     # Convert the mp4 input into multiple images (3 images for every seconds of the video)
     ffmpeg.input(file_input).filter('fps', fps=str(fps)).output(directory_output + '/out%d.jpg', start_number=0, **{'qscale:v': 2}).overwrite_output().run(quiet=isQuiet)
 

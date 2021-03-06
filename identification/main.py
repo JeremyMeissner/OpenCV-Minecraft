@@ -21,55 +21,47 @@ class color:
    CWHITE  = '\33[37m'
 """
 
+def detect_something_in_image(input_file, trees=["oak_tree"]):
+    # Open the tested image
+    img = cv2.imread(input_file) 
 
-# https://gist.github.com/keithweaver/562d3caa8650eefe7f84fa074e9ca949
-def createFolder(directory):
-    try:
-        if not os.path.exists(directory):
-            os.makedirs(directory)
-    except OSError:
-        print ('Error: Creating directory. ' +  directory)
+    # Open the image from BGR to RGB
+    img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
 
+    # Convert image to a gray one because the model was train in grayscale
+    img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) 
 
-img = cv2.imread("image_test.png") 
+    # I've done this because I wanted to add more type in the futur so, I'll just need to add to the array
+    for tree_type in trees:
 
-#OpenCV opens images as BRG  
-# but we want it as RGB and  
-# we also need a grayscale  
-# version 
-img_gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) 
-img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
+        # Import the file training model into OpenCV
+        oak_data = cv2.CascadeClassifier('models/{}.xml'.format(tree_type)) 
 
+        # Detect all the tree on the image (thanks to the training model)
+        found = oak_data.detectMultiScale(img_gray)
 
+        # Draw something only if there is more than 0 tree
+        if len(found) != 0: 
+            
+            # If there are more tree in the image
+            for (x, y, width, height) in found: 
+                
+                # Draw a green rectangle
+                cv2.rectangle(img_rgb, (x, y),  
+                            (x + height, y + width),  
+                            (0, 255, 0), 5) 
+                
+                # The text height is needed because I want to put the text under the rectangle and I need to substract itself to go under the rectangle
+                ((text_width, txt_height), o) = cv2.getTextSize(tree_type, cv2.FONT_HERSHEY_DUPLEX, 1.5, 2)
 
-# Use minSize because for not  
-# bothering with extra-small  
-# dots that would look like STOP signs 
-stop_data = cv2.CascadeClassifier('cascade.xml') 
+                # Draw a title next to the green rectangle
+                cv2.putText(img_rgb, tree_type, (x, y + height + txt_height), cv2.FONT_HERSHEY_DUPLEX, 1.5, (0, 255, 0), 2)
 
-found = stop_data.detectMultiScale(img_gray, minSize =(20, 20))
+        # Create the final image with the rectangle and the text
+        plt.subplot(1, 1, 1) 
+        plt.imshow(img_rgb) 
+        plt.show() 
 
-# Don't do anything if there's  
-# no sign 
-amount_found = len(found) 
-  
-  
-if amount_found != 0: 
-      
-    # There may be more than one 
-    # sign in the image 
-    for (x, y, width, height) in found: 
-          
-        # We draw a green rectangle around 
-        # every recognized sign 
-        cv2.rectangle(img_rgb, (x, y),  
-                      (x + height, y + width),  
-                      (0, 255, 0), 5) 
+detect_something_in_image("image_test2.png")
 
-
-# Creates the environment  
-# of the picture and shows it 
-plt.subplot(1, 1, 1) 
-plt.imshow(img_rgb) 
-plt.show() 
 
