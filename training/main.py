@@ -153,7 +153,7 @@ def train_the_cascade():
         print("Error: Error while training the cascade.")
     os.chdir('..')
 
-"""
+
 createFolder('positives')
 createFolder('negatives')
 createFolder('classifiers')
@@ -164,12 +164,13 @@ combine_all_positives_text_files()
 count_images()
 convert_to_vec_file()
 train_the_cascade()
+
+
+
+##############
+# UNIT TESTS #
+##############
 """
-
-
-
-
-
 def test_convert_mp4_to_jpg():
     # Delete folder if exist and create a new one
     deleteFolder("test_negatives")
@@ -206,3 +207,4 @@ def test_convert_to_vec_file():
     convert_to_vec_file("test")
     assert os.path.exists("test/cropped.vec")
     os.remove("test/cropped.vec")
+"""
