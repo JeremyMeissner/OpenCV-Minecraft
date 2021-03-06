@@ -2,6 +2,7 @@ import os
 import ffmpeg
 import cv2
 import matplotlib.pyplot as plt
+import shutil
 
 from time import sleep
 from subprocess import check_call
@@ -22,10 +23,12 @@ class color:
    CWHITE  = '\33[37m'
 """
 
-NUMBER_STAGES = 10
+NUMBER_STAGES = 20
+CASCADE_TYPE = "LBP"
 number_positives_images = number_negatives_images = 0
 
 # https://gist.github.com/keithweaver/562d3caa8650eefe7f84fa074e9ca949
+# Purpose: Create a folder is it doesn't already exist
 def createFolder(directory):
     try:
         if not os.path.exists(directory):
@@ -34,6 +37,7 @@ def createFolder(directory):
         print ('Error: Creating directory. ' +  directory)
 
 # https://stackoverflow.com/q/845058/11091778
+# Purpose: Count the number of line in a file, fast
 def file_len(fname):
     with open(fname) as f:
         for i, l in enumerate(f):
@@ -41,37 +45,42 @@ def file_len(fname):
     return i + 1
 
 
-def convert_mp4_to_jpg():
+def deleteFolder(directory):
+    try:
+        if os.path.exists(directory):
+            shutil.rmtree(directory)
+    except OSError:
+        print ('Error: Cannot delete directory. ' +  directory)
+
+def convert_mp4_to_jpg(file_input="trees/input.mp4", directory_output="", fps="3", isQuiet=False):
     # Convert the mp4 input into multiple images (3 images for every seconds of the video)
-    ffmpeg.input('trees/input.mp4').filter('fps', fps='3').output('negatives/out%d.jpg', start_number=0, **{'qscale:v': 2}).overwrite_output().run() #quiet=True
+    ffmpeg.input(file_input).filter('fps', fps=str(fps)).output(directory_output + '/out%d.jpg', start_number=0, **{'qscale:v': 2}).overwrite_output().run(quiet=isQuiet)
 
 
-def list_every_negatives_images():
+def list_every_negatives_images(directory="negatives"):
     # Alternative of ls (negativeImage is the folder where there are all the images proccess above)
-    negative_images = glob('negatives/*.jpg')
+    negative_images = glob(directory+'/*.jpg')
 
     # Reference all the images into a text file
     try:
-        with open("negatives/negatives.txt", "w+") as txt_file:
+        with open(directory+"/negatives.txt", "w+") as txt_file:
             for line in negative_images:
                 txt_file.write("{}\n".format(os.path.basename(line)))
     except:
         print("Error: Cannot create text file that reference negatives images.")
 
-def create_positives_images():
+def create_positives_images(directory_models="trees", input_file="negatives/negatives.txt", directory_output="positives"):
     # Alternative of ls (trees is the folder where there are all the trees image)
-    original_images = glob("trees/*.jpg")
-
-    print(original_images)
-    x = 0
-
+    original_images = glob(directory_models+"/*.jpg")
+    
     # Create the positives images for each trees images
     try:
+        x = 0
         for image_name in original_images:
             check_call(["opencv_createsamples",
-                        "-img", "trees/{}".format(os.path.basename(image_name)),
-                        "-bg", "negatives/negatives.txt",
-                        "-info", "positives/cropped{}.txt".format(x),
+                        "-img", directory_models+"/{}".format(os.path.basename(image_name)),
+                        "-bg", input_file,
+                        "-info", directory_output+"/cropped{}.txt".format(x),
                         "-num", "128",
                         "-maxxangle", "0.0",
                         "-maxyangle", "0.0",
@@ -84,10 +93,10 @@ def create_positives_images():
     except:
         print("Error: Cannot create positives images.")
 
-def combine_all_positives_text_files():
+def combine_all_positives_text_files(directory="positives"):
     lines = []
     # Alternative of ls (get all the txt file in the folder)
-    positives_text_files = glob("positives/*.txt")
+    positives_text_files = glob(directory+"/*.txt")
 
     # For each file selected above, put each line in an array (lines)
     for files in positives_text_files:
@@ -96,7 +105,7 @@ def combine_all_positives_text_files():
             lines.append(line)
 
     # Put every line of the array (lines) into an unique file
-    with open("positives/positives.txt", "w+") as txt_file:
+    with open(directory+"/positives.txt", "w+") as txt_file:
         for line in lines:
             txt_file.write("{}".format(line))
 
@@ -106,13 +115,13 @@ def count_images():
     number_positives_images = file_len("positives/positives.txt")
     number_negatives_images = file_len("negatives/negatives.txt")
 
-def convert_to_vec_file():
+def convert_to_vec_file(directory="positives"):
     try:
         # Convert to a vec file
         check_call(["opencv_createsamples",
-                        "-info", "positives/positives.txt",
-                        "-bg", "positives/negatives.txt",
-                        "-vec", "positives/cropped.vec",
+                        "-info", directory+"/positives.txt",
+                        "-bg", directory+"/negatives.txt",
+                        "-vec", directory+"/cropped.vec",
                         "-num", str(number_positives_images),
                         "-w", "48",
                         "-h", "48"])
@@ -134,15 +143,17 @@ def train_the_cascade():
                         "-numStages", str(NUMBER_STAGES),
                         "-precalcValBufSize", "1024",
                         "-precalcIdxBufSize", "1024",
-                        "-featureType", "HAAR",
-                        "-minHitRate", "0.995",
+                        "-featureType", CASCADE_TYPE,
+                        "-minHitRate", "0.999",
                         "-maxFalseAlarmRate", "0.5",
+                        "-mode", "ALL",
                         "-w", "48",
                         "-h", "48"])
     except:
         print("Error: Error while training the cascade.")
     os.chdir('..')
 
+"""
 createFolder('positives')
 createFolder('negatives')
 createFolder('classifiers')
@@ -153,5 +164,45 @@ combine_all_positives_text_files()
 count_images()
 convert_to_vec_file()
 train_the_cascade()
+"""
 
 
+
+
+
+def test_convert_mp4_to_jpg():
+    # Delete folder if exist and create a new one
+    deleteFolder("test_negatives")
+    createFolder("test_negatives")
+    # Call the function
+    convert_mp4_to_jpg("test/input.mp4", "test_negatives", 1, True)
+    # Test the length of the nubmer of 
+    assert len(glob('test_negatives/out*.jpg'))
+    deleteFolder("test_negatives")
+
+def test_list_every_negatives_images():
+    for f in glob("test/0*.jpg"):
+        os.remove(f)
+    for f2 in glob("test/cropped*.txt"):
+        os.remove(f2)
+    list_every_negatives_images("test")
+    assert os.path.exists("test/negatives.txt")
+
+def test_create_positives_images():
+    create_positives_images("test", "test/negatives.txt", "test")
+    assert len(glob('test/cropped*.txt'))
+
+
+def test_combine_all_positives_text_files():
+    os.remove("test/positives.txt")
+    combine_all_positives_text_files("test")
+    assert os.path.exists("test/positives.txt")
+
+def test_count_images():
+    count_images()
+    assert number_positives_images+number_negatives_images
+
+def test_convert_to_vec_file():
+    convert_to_vec_file("test")
+    assert os.path.exists("test/cropped.vec")
+    os.remove("test/cropped.vec")
