@@ -6,7 +6,7 @@ This project comes from a class in my computer science school. I had the constra
 
 [Documentation](https://docs.google.com/document/d/1ZlGSsDPuxT4mZsVWNyLaHXwyhqtaB1yeLEhQfmHXU44/) - [Specifications](https://docs.google.com/document/d/16gqORb4RyFK7fazQYQEVmj3Tza6Dj3DeS2O0oK9XvYk) - [Logbook](https://docs.google.com/document/d/1k9WzRwKpsKyxoCAJc5K88qaNXDz-lVgYPyrLLRAM08Y)
 
-![GitHub last commit](https://img.shields.io/github/last-commit/JeremyMeissner/OpenCV-Minecraft)
+![GitHub last commit](https://img.shields.io/github/last-commit/JeremyMeissner/OpenCV-Minecraft) ![GitHub Workflow Status](https://img.shields.io/github/workflow/status/JeremyMeissner/OpenCV-Minecraft/CodeQL)
 
 ![OpenCV Minecraft detect a tree](.github/img/oaktree.gif)
 
