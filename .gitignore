@@ -4,5 +4,6 @@ training/positives/*
 training/trees/*.mp4
 other/*
 
+# Unit test
 __pycache__/
 .pytest_cache/
