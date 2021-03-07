@@ -37,7 +37,7 @@ def createFolder(directory):
         if not os.path.exists(directory):
             os.makedirs(directory)
     except OSError:
-        print ('Error: Creating directory. ' +  directory)
+        print ("{}Error:{} Creating directory. {}".format(color.RED, color.END, directory))
 
 # https://stackoverflow.com/q/845058/11091778
 # Purpose: Count the number of line in a file, fast
@@ -53,7 +53,7 @@ def deleteFolder(directory):
         if os.path.exists(directory):
             shutil.rmtree(directory)
     except OSError:
-        print ('Error: Cannot delete directory. ' +  directory)
+        print ("{}Error:{} Cannot delete directory. ".format(color.RED, color.END, directory))
 
 def convert_mp4_to_jpg(file_input="trees/input.mp4", directory_output="negatives", fps="3", isQuiet=False):
     # Convert the mp4 input into multiple images (3 images for every seconds of the video)
@@ -70,7 +70,7 @@ def list_every_negatives_images(directory="negatives"):
             for line in negative_images:
                 txt_file.write("{}\n".format(os.path.basename(line)))
     except:
-        print("Error: Cannot create text file that reference negatives images.")
+        print("{}Error:{} Cannot create text file that reference negatives images.".format(color.RED, color.END))
 
 def create_positives_images(directory_models="trees", input_file="negatives/negatives.txt", directory_output="positives", isQuiet=False):
     stdout = None
@@ -98,7 +98,7 @@ def create_positives_images(directory_models="trees", input_file="negatives/nega
                         "-h", "48"], stdout=stdout)
             x += 1
     except:
-        print("Error: Cannot create positives images.")
+        print("{}Error:{} Cannot create positives images.".format(color.RED, color.END))
 
 def combine_all_positives_text_files(directory="positives"):
     lines = []
@@ -138,7 +138,7 @@ def convert_to_vec_file(directory="positives", isQuiet=False):
                         "-h", "48"], stdout=stdout)
         # -num 250 is the number of positives images
     except:
-        print("Error: Cannot convert to vec file.")
+        print("{}Error:{} Cannot convert to vec file.".format(color.RED, color.END))
 
 def train_the_cascade(isQuiet=False):
     stdout = None
@@ -165,7 +165,7 @@ def train_the_cascade(isQuiet=False):
                         "-w", "48",
                         "-h", "48"], stdout=stdout)
     except:
-        print("Error: Error while training the cascade.")
+        print("{}Error:{} Error while training the cascade.".format(color.RED, color.END))
     os.chdir('..')
 
 # Class that manage the elapsed time
@@ -253,8 +253,8 @@ if len(sys.argv) == 1:
 #ex: python3 ./main.py createFolder
 if len(sys.argv) == 2:
     execution_type = sys.argv[1] 
+    timer = Duration()
     if execution_type == "createFolders":
-        timer = Duration()
 
         print("Creating the folders...")
 
@@ -266,7 +266,6 @@ if len(sys.argv) == 2:
         timer.stop("folders")
 
     elif execution_type == "convertMp4ToJpg":
-        timer = Duration()
 
         print("Converting the mp4 video into multiples jpg...")
 
@@ -275,7 +274,6 @@ if len(sys.argv) == 2:
         timer.stop("mp4Conversion")
 
     elif execution_type == "listEveryNegativesImages":
-        timer = Duration()
 
         print("Listing every negatives images into a file...")
 
@@ -284,7 +282,6 @@ if len(sys.argv) == 2:
         timer.stop("listNegatives")
 
     elif execution_type == "createPositivesImages":
-        timer = Duration()
 
         print("Creating the positives images...")
 
@@ -293,7 +290,6 @@ if len(sys.argv) == 2:
         timer.stop("createPositives")
 
     elif execution_type == "combineAllPositivesTextFiles":
-        timer = Duration()
 
         print("Combining all the positives image text files into one file...")
 
@@ -302,7 +298,6 @@ if len(sys.argv) == 2:
         timer.stop("combinePositives")
 
     elif execution_type == "convertToVecFile":
-        timer = Duration()
 
         print("Counting the images...")
 
@@ -313,7 +308,6 @@ if len(sys.argv) == 2:
         timer.stop("convertToVec")
 
     elif execution_type == "trainTheCascade":
-        timer = Duration()
 
         print("Counting the images...")
 
@@ -322,7 +316,9 @@ if len(sys.argv) == 2:
         print("Training the cascade...")
         train_the_cascade(isQuiet=IS_QUIET)
         timer.stop("trainTheCascade")
-
+    else:
+        print("{}Error:{} The given function doesnt exist please use those one: <createFolders|convertMp4ToJpg|listEveryNegativesImages|createPositivesImages|combineAllPositivesTextFiles|convertToVecFile|trainTheCascade>".format(color.RED, color.END))
+        sys.exit()
 
 ##############
 # UNIT TESTS #
