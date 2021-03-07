@@ -1,12 +1,8 @@
 import os
+import sys
 import cv2
 import matplotlib.pyplot as plt
 
-from time import sleep
-from subprocess import check_call
-from glob import glob
-
-"""
 class color:
    PURPLE = '\033[95m'
    CYAN = '\033[96m'
@@ -18,10 +14,46 @@ class color:
    BOLD = '\033[1m'
    UNDERLINE = '\033[4m'
    END = '\033[0m'
-   CWHITE  = '\33[37m'
-"""
+   WHITE  = '\33[37m'
 
-def detect_something_in_image(input_file, trees=["oak_tree"]):
+
+VIDEO_WIDTH = 1920
+VIDEO_HEIGHT = 1080
+TREE_LIST = ["oak_tree"]
+
+#ex: python3 ./main.py
+if len(sys.argv) == 1:
+    print("{}Error:{} Please specify a detection type <image|video> <image_source|video_id> <tree_list>".format(color.RED, color.END))
+    sys.exit()
+
+detection_type = sys.argv[1]
+
+#ex: python3 ./main.py "image"
+if len(sys.argv) == 2:
+    if detection_type == "image":
+        print("{}Error:{} Please specify a input source ex: img/text.png".format(color.RED, color.END))
+        sys.exit()
+    if detection_type == "video":
+        input_element = 0
+
+#ex: python3 ./main.py "image" "salut.png"
+if len(sys.argv) == 3:
+    if detection_type == "image":
+        # Check if the given file exist
+        if not os.path.exists(sys.argv[2]):
+            print("{}Error:{} The input file image doesnt exist".format(color.RED, color.END))
+            sys.exit()
+        else:
+            input_element = sys.argv[2]
+    if detection_type == "video":
+        input_element = int(sys.argv[2])
+
+if len(sys.argv) > 3:
+    print("{}Error:{} Too much arguments, excepted: 2, given: {}".format(color.RED, color.END, len(sys.argv)-1))
+    sys.exit()
+
+
+def detect_something_in_image(input_file, trees):
     # Open the tested image
     img = cv2.imread(input_file) 
 
@@ -62,15 +94,15 @@ def detect_something_in_image(input_file, trees=["oak_tree"]):
         plt.imshow(img_rgb) 
         plt.show() 
 
-def detect_something_in_stream(trees=["oak_tree"]):
+def detect_something_in_stream(video_id, trees):
     data = []
 
     # Open the stream video flux
-    imcap = cv2.VideoCapture(0) 
+    video = cv2.VideoCapture(video_id) 
 
-    # Define the video size (1920 x 1080)
-    imcap.set(3, 1920)
-    imcap.set(4, 1080)
+    # Define the video size (VIDEO_WIDTH x VIDEO_HEIGHT)
+    video.set(3, VIDEO_WIDTH)
+    video.set(4, VIDEO_HEIGHT)
 
     # I've done this because I wanted to add more type in the futur so, I'll just need to add to the array
     for i, tree_type in enumerate(trees):
@@ -79,7 +111,7 @@ def detect_something_in_stream(trees=["oak_tree"]):
 
     while True:
         # Select a frame from the stream video flux
-        success, img = imcap.read()
+        success, img = video.read()
 
         # Open the image from BGR to RGB
         img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB) 
@@ -111,14 +143,22 @@ def detect_something_in_stream(trees=["oak_tree"]):
                     cv2.putText(img_rgb, tree_type, (x, y + height + text_height), cv2.FONT_HERSHEY_DUPLEX, 1.5, (0, 255, 0), 2)
 
             # Create the final image with the rectangle and the text
-            cv2.imshow('face_detect', cv2.cvtColor(img_rgb, cv2.COLOR_RGB2BGR))
+            cv2.imshow("OpenCV Minecraft Tree Detection", cv2.cvtColor(img_rgb, cv2.COLOR_RGB2BGR))
 
-            # loop will be broken when 'q' is pressed on the keyboard
-            if cv2.waitKey(10) & 0xFF == ord('q'):
-                break
+        # The program stop if "q" is pressed
+        if cv2.waitKey(10) & 0xFF == ord('q'):
+            break
+
+    # Close the video capture and destroy the window properly
+    video.release()
+    cv2.destroyWindow("OpenCV Minecraft Tree Detection")
 
 
-#detect_something_in_image("image_test.png")
-detect_something_in_stream()
+if detection_type == "image":
+    print("Showing the final image...")
+    detect_something_in_image(input_element, TREE_LIST)
+elif detection_type == "video":
+    print("Starting the real time detection... (press q to exit)")
+    detect_something_in_stream(input_element, TREE_LIST)
 
 
