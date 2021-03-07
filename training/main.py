@@ -1,14 +1,13 @@
 import os
 import ffmpeg
-import cv2
-import matplotlib.pyplot as plt
+import sys
 import shutil
 
-from time import sleep
+from time import sleep, time
 from subprocess import check_call
 from glob import glob
 
-"""
+
 class color:
    PURPLE = '\033[95m'
    CYAN = '\033[96m'
@@ -20,12 +19,16 @@ class color:
    BOLD = '\033[1m'
    UNDERLINE = '\033[4m'
    END = '\033[0m'
-   CWHITE  = '\33[37m'
-"""
+   WHITE  = '\33[37m'
+
+IS_QUIET = True
 
 NUMBER_STAGES = 20
 CASCADE_TYPE = "LBP"
 number_positives_images = number_negatives_images = 0
+
+# sudo ln /dev/null /dev/raw1394
+
 
 # https://gist.github.com/keithweaver/562d3caa8650eefe7f84fa074e9ca949
 # Purpose: Create a folder is it doesn't already exist
@@ -69,10 +72,14 @@ def list_every_negatives_images(directory="negatives"):
     except:
         print("Error: Cannot create text file that reference negatives images.")
 
-def create_positives_images(directory_models="trees", input_file="negatives/negatives.txt", directory_output="positives"):
+def create_positives_images(directory_models="trees", input_file="negatives/negatives.txt", directory_output="positives", isQuiet=False):
+    stdout = None
+    if isQuiet:
+        stdout=open(os.devnull, 'wb')
+    
     # Alternative of ls (trees is the folder where there are all the trees image)
     original_images = glob(directory_models+"/*.jpg")
-    
+
     # Create the positives images for each trees images
     try:
         x = 0
@@ -88,7 +95,7 @@ def create_positives_images(directory_models="trees", input_file="negatives/nega
                         "-bgcolor", "255",
                         "-bgthresh", "8",
                         "-w", "48",
-                        "-h", "48"])
+                        "-h", "48"], stdout=stdout)
             x += 1
     except:
         print("Error: Cannot create positives images.")
@@ -115,7 +122,11 @@ def count_images():
     number_positives_images = file_len("positives/positives.txt")
     number_negatives_images = file_len("negatives/negatives.txt")
 
-def convert_to_vec_file(directory="positives"):
+def convert_to_vec_file(directory="positives", isQuiet=False):
+    stdout = None
+    if isQuiet:
+        stdout=open(os.devnull, 'wb')
+
     try:
         # Convert to a vec file
         check_call(["opencv_createsamples",
@@ -124,12 +135,16 @@ def convert_to_vec_file(directory="positives"):
                         "-vec", directory+"/cropped.vec",
                         "-num", str(number_positives_images),
                         "-w", "48",
-                        "-h", "48"])
+                        "-h", "48"], stdout=stdout)
         # -num 250 is the number of positives images
     except:
         print("Error: Cannot convert to vec file.")
 
-def train_the_cascade():
+def train_the_cascade(isQuiet=False):
+    stdout = None
+    if isQuiet:
+        stdout=open(os.devnull, 'wb')
+
     # Alternative of cd (needed because the negatives.txt file only have the file name)
     os.chdir('negatives')
     # Train the Haar cascade 
@@ -148,23 +163,165 @@ def train_the_cascade():
                         "-maxFalseAlarmRate", "0.5",
                         "-mode", "ALL",
                         "-w", "48",
-                        "-h", "48"])
+                        "-h", "48"], stdout=stdout)
     except:
         print("Error: Error while training the cascade.")
     os.chdir('..')
 
+# Class that manage the elapsed time
+class Duration:
+    times = {}
 
-createFolder('positives')
-createFolder('negatives')
-createFolder('classifiers')
-convert_mp4_to_jpg()
-list_every_negatives_images()
-create_positives_images()
-combine_all_positives_text_files()
-count_images()
-convert_to_vec_file()
-train_the_cascade()
+    # Start a timer
+    def start(self, name):
+        Duration.times[name] = time()
 
+    # End a timer (and store the result)
+    def end(self, name):
+        Duration.times[name] = time() - Duration.times[name]
+
+    # End a timer (and store the result) and show the result
+    def stop(self, name):
+        Duration.times[name] = time() - Duration.times[name]
+        print("Done. (in {}s)".format(round(Duration.times[name], 4)))
+
+    # Show the result for one timer
+    def show(self, name):
+        print("{} done in {}s".format(name, round(Duration.times[name], 4)))
+
+    # Show the result for every stored timer
+    def showAll(self):
+        print()
+        print("All duration in seconds:")
+        for key, value in Duration.times.items():
+            print("{} => {}s".format(key, round(value, 4)))
+
+
+#ex: python3 ./main.py
+if len(sys.argv) == 1:
+    print("{}Warning:{} By default the program execute everything, from the image extraction to the training".format(color.YELLOW, color.END))
+
+    sleep(2)
+    timer = Duration()
+
+    print("Creating the folders...")
+    timer.start("folders")
+    createFolder('positives')
+    createFolder('negatives')
+    createFolder('classifiers')
+    timer.end("folders")
+
+    print("Converting the mp4 video into multiples jpg...")
+    timer.start("mp4Conversion")
+    convert_mp4_to_jpg(isQuiet=IS_QUIET)
+    timer.end("mp4Conversion")
+
+    print("Listing every negatives images into a file...")
+    timer.start("listNegatives")
+    list_every_negatives_images()
+    timer.end("listNegatives")
+
+    print("Creating the positives images...")
+    timer.start("createPositives")
+    create_positives_images(isQuiet=IS_QUIET)
+    timer.end("createPositives")
+    
+    print("Combining all the positives image text files into one file...")
+    timer.start("combinePositives")
+    combine_all_positives_text_files()
+    timer.end("combinePositives")
+
+    print("Counting the images...")
+    timer.start("countImages")
+    count_images()
+    timer.end("countImages")
+
+    print("Converting the image into a vec file...")
+    timer.start("convertToVec")
+    convert_to_vec_file(isQuiet=IS_QUIET)
+    timer.end("convertToVec")
+
+    print("Training the cascade...")
+    timer.start("trainTheCascade")
+    train_the_cascade(isQuiet=IS_QUIET)
+    timer.end("trainTheCascade")
+
+    timer.showAll()
+    print("Everything Done.")
+
+
+#ex: python3 ./main.py createFolder
+if len(sys.argv) == 2:
+    execution_type = sys.argv[1] 
+    if execution_type == "createFolders":
+        timer = Duration()
+
+        print("Creating the folders...")
+
+        timer.start("folders")
+        createFolder('positives')
+        createFolder('negatives')
+        createFolder('classifiers')
+
+        timer.stop("folders")
+
+    elif execution_type == "convertMp4ToJpg":
+        timer = Duration()
+
+        print("Converting the mp4 video into multiples jpg...")
+
+        timer.start("mp4Conversion")
+        convert_mp4_to_jpg(isQuiet=IS_QUIET)
+        timer.stop("mp4Conversion")
+
+    elif execution_type == "listEveryNegativesImages":
+        timer = Duration()
+
+        print("Listing every negatives images into a file...")
+
+        timer.start("listNegatives")
+        list_every_negatives_images()
+        timer.stop("listNegatives")
+
+    elif execution_type == "createPositivesImages":
+        timer = Duration()
+
+        print("Creating the positives images...")
+
+        timer.start("createPositives")
+        create_positives_images(isQuiet=IS_QUIET)
+        timer.stop("createPositives")
+
+    elif execution_type == "combineAllPositivesTextFiles":
+        timer = Duration()
+
+        print("Combining all the positives image text files into one file...")
+
+        timer.start("combinePositives")
+        combine_all_positives_text_files()
+        timer.stop("combinePositives")
+
+    elif execution_type == "convertToVecFile":
+        timer = Duration()
+
+        print("Counting the images...")
+
+        timer.start("convertToVec")
+        count_images()
+        print("Converting the image into a vec file...")
+        convert_to_vec_file(isQuiet=IS_QUIET)
+        timer.stop("convertToVec")
+
+    elif execution_type == "trainTheCascade":
+        timer = Duration()
+
+        print("Counting the images...")
+
+        timer.start("trainTheCascade")
+        count_images()
+        print("Training the cascade...")
+        train_the_cascade(isQuiet=IS_QUIET)
+        timer.stop("trainTheCascade")
 
 
 ##############
