@@ -8,11 +8,11 @@ This project comes from a class in my computer science school. I had the constra
 
 ![GitHub last commit](https://img.shields.io/github/last-commit/JeremyMeissner/OpenCV-Minecraft)
 
-![OpenCV Minecraft detect a tree](oaktree.gif)
+![OpenCV Minecraft detect a tree](.github/img/oaktree.gif)
 
 ## Project structure
 
-![OpenCV Minecraft detect a tree](organization.png)
+![OpenCV Minecraft detect a tree](.github/img/organization.png)
 
 ### Demo
 
