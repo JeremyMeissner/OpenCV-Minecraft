@@ -12,7 +12,17 @@ This project comes from a class in my computer science school. I had the constra
 
 ## Project structure
 
+### Folders structure
+
 ![OpenCV Minecraft detect a tree](.github/img/organization.png)
+
+### Training structure
+
+![OpenCV Minecraft detect a tree](.github/img/struct-training.png)
+
+### Identification structure
+
+![OpenCV Minecraft detect a tree](.github/img/struct-identification.png)
 
 ### Demo
 
