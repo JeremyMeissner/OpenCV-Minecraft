@@ -19,7 +19,7 @@ class color:
 
 VIDEO_WIDTH = 1920
 VIDEO_HEIGHT = 1080
-TREE_LIST = ["oak_tree"]
+TREE_LIST = ["oak_tree", "birch_tree"]
 
 #ex: python3 ./main.py
 if len(sys.argv) == 1:
